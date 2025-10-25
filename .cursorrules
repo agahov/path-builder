@@ -1,0 +1,204 @@
+# Cursor Rules for Path Builder Game
+
+## Core Architecture Rules
+
+### 1. Use Closures Instead of Classes
+- **NEVER use JavaScript classes** - always use closure-based patterns
+- Prefer factory functions that return objects with methods
+- Use closures to encapsulate private state and behavior
+- Example pattern:
+  ```typescript
+  function createGame(canvas: HTMLCanvasElement) {
+    let privateState = { /* private variables */ };
+    
+    return {
+      start() { /* public method */ },
+      stop() { /* public method */ },
+      // other public methods
+    };
+  }
+  ```
+
+### 2. Functional Programming Patterns
+- Prefer pure functions over methods
+- Use function composition over inheritance
+- Avoid mutable state when possible
+- Use higher-order functions for reusable logic
+
+### 3. ECS Architecture
+- Maintain the Entity-Component-System pattern
+- Systems should be pure functions that operate on component data
+- Components should be simple data structures
+- Entities are just IDs - no behavior attached
+
+#### bitECS Component Patterns
+- Components are simple objects with typed arrays
+- Components should only contain data, no methods
+- Use appropriate TypeScript array types for performance
+- Example component structure:
+  ```typescript
+  export const Position = {
+    x: [] as number[],
+    y: [] as number[],
+  };
+  
+  export const Velocity = {
+    x: [] as number[],
+    y: [] as number[],
+    acceleration: [] as number[],
+    maxSpeed: [] as number[],
+  };
+  ```
+
+#### bitECS Best Practices
+- **Component Access**: Use array notation for component data access
+  ```typescript
+  // Good: Direct array access
+  Position.x[entity] = 100;
+  const currentX = Position.x[entity];
+  
+  // Bad: Don't try to access as object properties
+  // Position[entity].x = 100; // This won't work
+  ```
+  
+- **System Patterns**: Systems should iterate over entity arrays efficiently
+  ```typescript
+  export function movementSystem(deltaTime: number) {
+    const entities = movableEntities;
+    
+    for (let i = 0; i < entities.length; i++) {
+      const entity = entities[i];
+      Position.x[entity] += Velocity.x[entity] * deltaTime;
+      Position.y[entity] += Velocity.y[entity] * deltaTime;
+    }
+  }
+  ```
+  
+- **Component Types**: Choose appropriate TypeScript array types
+  - `number[]` for floating point numbers (position, velocity, etc.)
+  - `Uint32Array` for unsigned integers (colors, IDs, flags)
+  - `Int32Array` for signed integers (counts, indices)
+  - `Float64Array` for high-precision floating point (rarely needed)
+
+## Code Style Rules
+
+### 4. TypeScript Best Practices
+- Use strict type checking
+- Prefer interfaces over types for object shapes
+- Use `const` assertions for immutable data
+- Avoid `any` type - use `unknown` if necessary
+
+### 5. Import/Export Patterns
+- Use named exports over default exports
+- Group imports: external libraries first, then internal modules
+- Use `.js` extensions in import statements for ES modules
+
+### 6. Naming Conventions
+- Use camelCase for variables and functions
+- Use PascalCase for types and interfaces
+- Use UPPER_SNAKE_CASE for constants
+- Use descriptive names that explain intent
+
+## Project-Specific Rules
+
+### 7. Game Development Patterns
+- Keep game loop simple and performant
+- Separate update logic from render logic
+- Use delta time for frame-rate independent movement
+- Implement proper scaling for different screen sizes
+
+### 8. Logging System
+- Use the existing logger system for all console output
+- Log important state changes and errors
+- Use appropriate log levels (debug, info, warning, error)
+- Include relevant context data in log messages
+
+### 9. Performance Considerations
+- Minimize object creation in hot paths (game loop)
+- Use object pooling for frequently created/destroyed objects
+- Prefer array methods over manual loops when appropriate
+- Cache expensive calculations
+
+### 10. Error Handling
+- Use proper error boundaries
+- Log errors with context
+- Fail gracefully when possible
+- Validate inputs at boundaries
+
+## File Organization
+
+### 11. Module Structure
+- Keep modules focused on single responsibility
+- Use barrel exports (index.ts) for clean imports
+- Group related functionality together
+- Separate configuration from implementation
+
+### 12. Documentation
+- Add JSDoc comments for public APIs
+- Document complex algorithms
+- Include usage examples for utility functions
+- Keep README updated with setup instructions
+
+## Refactoring Guidelines
+
+### 13. Converting Classes to Closures
+When refactoring existing classes:
+1. Identify the class's private state (instance variables)
+2. Create a factory function that captures this state in closures
+3. Return an object with public methods that access the closed state
+4. Ensure the public API remains the same for compatibility
+5. Update all instantiation code to use the factory function
+
+### 14. Testing Strategy
+- Write unit tests for pure functions
+- Test closure behavior through public methods
+- Mock external dependencies
+- Test error conditions and edge cases
+
+## Examples
+
+### Good: Closure-based Game
+```typescript
+function createGame(canvas: HTMLCanvasElement) {
+  let isRunning = false;
+  let animationId = 0;
+  let lastTime = 0;
+  
+  const start = () => {
+    if (isRunning) return;
+    isRunning = true;
+    lastTime = performance.now();
+    gameLoop(lastTime);
+  };
+  
+  const stop = () => {
+    isRunning = false;
+    if (animationId) {
+      cancelAnimationFrame(animationId);
+      animationId = 0;
+    }
+  };
+  
+  const gameLoop = (currentTime: number) => {
+    if (!isRunning) return;
+    
+    const deltaTime = (currentTime - lastTime) / 1000;
+    lastTime = currentTime;
+    
+    update(deltaTime);
+    render();
+    
+    animationId = requestAnimationFrame(gameLoop);
+  };
+  
+  return { start, stop };
+}
+```
+
+### Bad: Class-based Game
+```typescript
+class Game {
+  private isRunning = false;
+  // ... rest of class implementation
+}
+```

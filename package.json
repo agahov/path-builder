@@ -12,5 +12,8 @@
     "@types/node": "^24.8.1",
     "typescript": "^5.6.3",
     "vite": "^5.4.8"
+  },
+  "dependencies": {
+    "bitecs": "github:NateTheGreatt/bitECS#rc-0-4-0"
   }
 }

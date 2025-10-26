@@ -16,6 +16,15 @@ export const GAME_CONFIG = {
   // FPS
   TARGET_FPS: 60,
   FPS_UPDATE_INTERVAL: 1000, // Update FPS display every 1000ms
+  
+  // Path configuration
+  PATH: {
+    DEFAULT_LINE_WIDTH: 3,
+    DEFAULT_LINE_COLOR: 0x00ff00,    // Green
+    DEFAULT_SMOOTHNESS: 0.5,
+    CONTROL_POINT_RADIUS: 8,
+    CONTROL_POINT_COLOR: 0xff0000,   // Red
+  },
 } as const;
 
 export const LOGGER_CONFIG = {

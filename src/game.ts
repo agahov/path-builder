@@ -1,6 +1,6 @@
-import { createEntity } from './ecs/world.js';
 import { movementSystem } from './ecs/systems/movement.js';
 import { renderSystem } from './ecs/systems/render.js';
+import { createPathWithControlPoints } from './ecs/entities.js';
 import { GAME_CONFIG } from './config.js';
 import { createLogger } from './logger/index.js';
 
@@ -30,10 +30,11 @@ export function createGame(canvas: HTMLCanvasElement) {
   
   // Create initial entities
   function createInitialEntities() {
-    for (let i = 0; i < GAME_CONFIG.DEFAULT_ENTITY_COUNT; i++) {
-      const entity = createEntity(canvas.width, canvas.height);
-      logger.info(`Created entity ${entity}`);
-    }
+    // Create a path with 3 control points
+    const { pathEntity, controlPointEntities, pathLineEntities } = createPathWithControlPoints(3, canvas.width, canvas.height);
+    logger.info(`Created path entity ${pathEntity}`);
+    logger.info(`Created ${controlPointEntities.length} control points: ${controlPointEntities.join(', ')}`);
+    logger.info(`Created ${pathLineEntities.length} path lines: ${pathLineEntities.join(', ')}`);
   }
   
   // Game loop

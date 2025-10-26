@@ -1,8 +1,11 @@
 import { createWorld, addEntity, addComponent, query } from 'bitecs';
-import { Position, Movement, Render } from './components.js';
+import { Position, Movement, Render, Path, PathLine, PathParent, ControlPoint } from './components.js';
 
 // Create the ECS world
 export const world = createWorld();
+
+// Export addComponent for use in entities.ts
+export { addComponent };
 
 // Helper function to create a basic entity with all components
 export function createEntity(canvasWidth: number = 1920, canvasHeight: number = 1080) {
@@ -41,4 +44,16 @@ export function getRenderableEntities() {
 
 export function getMovableEntities() {
   return query(world, [Position, Movement]);
+}
+
+export function getPathEntities() {
+  return query(world, [Path]);
+}
+
+export function getControlPointEntities() {
+  return query(world, [ControlPoint, PathParent]);
+}
+
+export function getPathLineEntities() {
+  return query(world, [PathLine]);
 }

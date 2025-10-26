@@ -16,4 +16,28 @@ export const Render = {
   radius: [] as number[],
 };
 
+// Path component - holds first PathLine entity ID and rendering style
+export const Path = {
+  firstPathLine: [] as number[],   // Entity ID of first PathLine in chain
+  lineWidth: [] as number[],        // Rendering style for entire path
+  lineColor: [] as number[],        // Color as hex value
+  smoothness: [] as number[],       // Curve smoothness factor (0-1)
+};
+
+// PathLine component - forms linked chain between control points
+export const PathLine = {
+  startControlPoint: [] as number[], // Entity ID of start control point
+  nextPathLine: [] as number[],      // Entity ID of next PathLine (0 for none)
+};
+
+// PathParent component - references parent path
+export const PathParent = {
+  pathEntityId: [] as number[],     // Reference to parent path entity
+};
+
+// ControlPoint component - marker for control point entities
+export const ControlPoint = {
+  isControlPoint: [] as number[],   // Flag marker (1 = true, 0 = false)
+};
+
 

@@ -1,16 +1,124 @@
-import { Position, Render } from '../components.js';
-import { getRenderableEntities } from '../world.js';
+import { Position, Render, Path, PathLine } from '../components.js';
+import { getRenderableEntities, getPathEntities } from '../world.js';
 import { GAME_CONFIG } from '../../config.js';
 import { createLogger } from '../../logger/index.js';
 
 const logger = createLogger('render');
+
+// Helper function to generate smooth curve points using Catmull-Rom spline
+function generateSmoothPoints(controlPoints: Array<{ x: number; y: number }>): Array<{ x: number; y: number }> {
+  if (controlPoints.length < 2) return controlPoints;
+  
+  const points: Array<{ x: number; y: number }> = [];
+  const segments = 20; // Number of intermediate points between each pair
+  
+  for (let i = 0; i < controlPoints.length; i++) {
+    const p0 = controlPoints[i];
+    const p1 = controlPoints[(i + 1) % controlPoints.length];
+    const p2 = controlPoints[(i + 2) % controlPoints.length];
+    const p3 = controlPoints[(i + 3) % controlPoints.length];
+    
+    for (let j = 0; j <= segments; j++) {
+      const t = j / segments;
+      const t2 = t * t;
+      const t3 = t2 * t;
+      
+      // Catmull-Rom spline formula
+      const x = 0.5 * (
+        (2 * p1.x) +
+        (-p0.x + p2.x) * t +
+        (2 * p0.x - 5 * p1.x + 4 * p2.x - p3.x) * t2 +
+        (-p0.x + 3 * p1.x - 3 * p2.x + p3.x) * t3
+      );
+      
+      const y = 0.5 * (
+        (2 * p1.y) +
+        (-p0.y + p2.y) * t +
+        (2 * p0.y - 5 * p1.y + 4 * p2.y - p3.y) * t2 +
+        (-p0.y + 3 * p1.y - 3 * p2.y + p3.y) * t3
+      );
+      
+      points.push({ x, y });
+    }
+  }
+  
+  return points;
+}
+
+function pathRenderSystem(ctx: CanvasRenderingContext2D, scaleX: number, scaleY: number) {
+  const pathEntities = getPathEntities();
+  
+  for (let i = 0; i < pathEntities.length; i++) {
+    const pathEntity = pathEntities[i];
+    
+    // Get path style properties
+    const lineWidth = Path.lineWidth[pathEntity];
+    const lineColor = Path.lineColor[pathEntity];
+    
+    // Traverse PathLine chain to collect control points
+    const controlPointPositions: Array<{ x: number; y: number }> = [];
+    let currentPathLine = Path.firstPathLine[pathEntity];
+    const visited = new Set<number>();
+    
+    // Follow the linked list of PathLines
+    while (currentPathLine > 0 && !visited.has(currentPathLine)) {
+      visited.add(currentPathLine);
+      
+      const controlPointEntity = PathLine.startControlPoint[currentPathLine];
+      
+      // Get control point position
+      controlPointPositions.push({
+        x: Position.x[controlPointEntity],
+        y: Position.y[controlPointEntity],
+      });
+      
+      // Move to next PathLine in chain
+      currentPathLine = PathLine.nextPathLine[currentPathLine];
+      
+      // If we've looped back to the start, we're done
+      if (visited.has(currentPathLine)) {
+        break;
+      }
+    }
+    
+    if (controlPointPositions.length < 2) continue;
+    
+    // Generate smooth curve points
+    const smoothPoints = generateSmoothPoints(controlPointPositions);
+    
+    // Draw the path
+    ctx.strokeStyle = `#${lineColor.toString(16).padStart(6, '0')}`;
+    ctx.lineWidth = lineWidth;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    
+    ctx.beginPath();
+    for (let j = 0; j < smoothPoints.length; j++) {
+      const point = smoothPoints[j];
+      const x = point.x * scaleX;
+      const y = point.y * scaleY;
+      
+      if (j === 0) {
+        ctx.moveTo(x, y);
+      } else {
+        ctx.lineTo(x, y);
+      }
+    }
+    
+    ctx.closePath();
+    ctx.stroke();
+  }
+}
 
 export function renderSystem(ctx: CanvasRenderingContext2D, scaleX: number, scaleY: number, fps: number) {
   // Clear canvas
   ctx.fillStyle = GAME_CONFIG.BACKGROUND_COLOR;
   ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
   
-  // Get all renderable entities
+  // Render paths first (background layer)
+  pathRenderSystem(ctx, scaleX, scaleY);
+  
+  // Get all renderable entities (including control points)
   const entities = getRenderableEntities();
   logger.info(`Render system: ${entities.length} entities found`);  
   // Draw all entities

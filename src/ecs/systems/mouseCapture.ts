@@ -1,22 +1,26 @@
-// Mouse is now a plain JS object; no ECS components/entities are used here
-import { GAME_CONFIG } from '../../config.js';
-import { getDraggableEntities } from '../world.js';
-import { Position, Render } from '../components.js';
 import { createLogger } from '../../logger/index.js';
-import { InputParams } from '../types.js';
+import { InputParams, MouseEventHandler } from '../types.js';
 
 const logger = createLogger('mouseCapture');
 
 export function createMouseCaptureSystem(canvas: HTMLCanvasElement, scaleX: number, scaleY: number) {
   let isActive = false;
+  
   // Plain JS mouse state object
   const mouse: InputParams = {
+    state: "disabled",
     screenX: 0,
     screenY: 0,
     worldX: 0,
     worldY: 0,
     isDown: 0 as 0 | 1,
-    selected: 0,
+  };
+  
+  // Event listeners storage
+  const listeners = {
+    mousemove: [] as MouseEventHandler[],
+    mousedown: [] as MouseEventHandler[],
+    mouseup: [] as MouseEventHandler[],
   };
   
   // Transform screen coordinates to world coordinates
@@ -27,31 +31,15 @@ export function createMouseCaptureSystem(canvas: HTMLCanvasElement, scaleX: numb
     };
   }
   
-  // Find control point at world position (within click radius)
-  function findControlPointAt(worldX: number, worldY: number): number | null {
-    const draggableEntities = getDraggableEntities();
-    const clickRadius = GAME_CONFIG.CONTROL_POINT.CLICK_RADIUS;
-    
-    let closestEntity: number | null = null;
-    let closestDistance = clickRadius + 1; // Initialize beyond threshold
-    
-    for (let i = 0; i < draggableEntities.length; i++) {
-      const entity = draggableEntities[i];
-      const dx = Position.x[entity] - worldX;
-      const dy = Position.y[entity] - worldY;
-      const distance = Math.sqrt(dx * dx + dy * dy);
-      
-      // Check if within radius (considering the control point's render radius)
-      const entityRadius = Render.radius[entity];
-      const threshold = Math.max(clickRadius, entityRadius);
-      
-      if (distance < threshold && distance < closestDistance) {
-        closestDistance = distance;
-        closestEntity = entity;
+  // Emit event to all listeners
+  function emit(event: 'mousemove' | 'mousedown' | 'mouseup', worldX: number, worldY: number) {
+    listeners[event].forEach(handler => {
+      try {
+        handler(worldX, worldY);
+      } catch (error) {
+        logger.error(`Error in ${event} handler:`, error);
       }
-    }
-    
-    return closestEntity;
+    });
   }
   
   // Mouse event handlers
@@ -67,6 +55,8 @@ export function createMouseCaptureSystem(canvas: HTMLCanvasElement, scaleX: numb
     mouse.screenY = screenY;
     mouse.worldX = worldPos.x;
     mouse.worldY = worldPos.y;
+    
+    emit('mousemove', worldPos.x, worldPos.y);
   };
   
   const onMouseDown = (e: MouseEvent) => {
@@ -82,14 +72,11 @@ export function createMouseCaptureSystem(canvas: HTMLCanvasElement, scaleX: numb
     mouse.worldX = worldPos.x;
     mouse.worldY = worldPos.y;
     mouse.isDown = 1;
+    mouse.state = "dragging";
     
-    // Find control point at position
-    const entity = findControlPointAt(worldPos.x, worldPos.y);
-    mouse.selected = entity || 0;
+    emit('mousedown', worldPos.x, worldPos.y);
     
-    if (entity) {
-      logger.info(`Mouse down on control point ${entity} at world (${worldPos.x.toFixed(2)}, ${worldPos.y.toFixed(2)})`);
-    }
+    logger.info(`Mouse down at world (${worldPos.x.toFixed(2)}, ${worldPos.y.toFixed(2)})`);
   };
   
   const onMouseUp = (e: MouseEvent) => {
@@ -105,9 +92,23 @@ export function createMouseCaptureSystem(canvas: HTMLCanvasElement, scaleX: numb
     mouse.worldX = worldPos.x;
     mouse.worldY = worldPos.y;
     mouse.isDown = 0;
-    mouse.selected = 0;
+    mouse.state = "hover";
+    
+    emit('mouseup', worldPos.x, worldPos.y);
     
     logger.info(`Mouse up at world (${worldPos.x.toFixed(2)}, ${worldPos.y.toFixed(2)})`);
+  };
+  
+  // EventEmitter-like API
+  const on = (event: 'mousemove' | 'mousedown' | 'mouseup', handler: MouseEventHandler) => {
+    listeners[event].push(handler);
+  };
+  
+  const off = (event: 'mousemove' | 'mousedown' | 'mouseup', handler: MouseEventHandler) => {
+    const index = listeners[event].indexOf(handler);
+    if (index > -1) {
+      listeners[event].splice(index, 1);
+    }
   };
   
   const start = () => {
@@ -119,7 +120,7 @@ export function createMouseCaptureSystem(canvas: HTMLCanvasElement, scaleX: numb
     mouse.worldX = 0;
     mouse.worldY = 0;
     mouse.isDown = 0;
-    mouse.selected = 0;
+    mouse.state = "hover";
     
     // Subscribe to events
     canvas.addEventListener('mousemove', onMouseMove);
@@ -139,19 +140,20 @@ export function createMouseCaptureSystem(canvas: HTMLCanvasElement, scaleX: numb
     canvas.removeEventListener('mouseup', onMouseUp);
     
     isActive = false;
+    mouse.state = "disabled";
     logger.info('Mouse capture system stopped');
   };
   
-  // For backward compatibility, keep the same getter name but return the JS object
-  const getInteractiveEntity = (): InputParams => mouse;
-  // Alias as requested: getIn returns the same mouse object
-  const getIn = (): InputParams => mouse;
+  const getMouseState = (): InputParams => mouse;
   
   return {
     start,
     stop,
-    getInteractiveEntity,
-    getIn,
+    on,
+    off,
+    getMouseState,
+    // For backward compatibility
+    getInteractiveEntity: getMouseState,
+    getIn: getMouseState,
   };
 }
-

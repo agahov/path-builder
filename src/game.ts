@@ -1,6 +1,6 @@
 import { movementSystem } from './ecs/systems/movement.js';
 import { renderSystem } from './ecs/systems/render.js';
-import { mouseInteractionSystem } from './ecs/systems/mouseInteraction.js';
+import { createMouseInteractionSystem } from './ecs/systems/mouseInteraction.js';
 import { dragSystem } from './ecs/systems/dragSystem.js';
 import { createMouseCaptureSystem } from './ecs/systems/mouseCapture.js';
 import { createPathWithControlPoints } from './ecs/entities.js';
@@ -34,6 +34,14 @@ export function createGame(canvas: HTMLCanvasElement) {
   // Create mouse capture system
   const mouseCaptureSystem = createMouseCaptureSystem(canvas, scaleX, scaleY);
   
+  // Create mouse interaction system
+  const mouseInteractionSystem = createMouseInteractionSystem();
+  
+  // Register mouse event handlers
+  mouseCaptureSystem.on('mousemove', mouseInteractionSystem.onMouseMove);
+  mouseCaptureSystem.on('mousedown', mouseInteractionSystem.onMouseDown);
+  mouseCaptureSystem.on('mouseup', mouseInteractionSystem.onMouseUp);
+  
   // Create initial entities
   function createInitialEntities() {
     // Create a path with 3 control points
@@ -61,9 +69,8 @@ export function createGame(canvas: HTMLCanvasElement) {
     // Update game systems
     movementSystem(deltaTime);
     
-    // Update mouse interaction systems
-    const mouse = mouseCaptureSystem.getInteractiveEntity();
-    mouseInteractionSystem(mouse);
+    // Update drag system (runs every frame during dragging)
+    const mouse = mouseCaptureSystem.getMouseState();
     dragSystem(mouse);
     
     // Render

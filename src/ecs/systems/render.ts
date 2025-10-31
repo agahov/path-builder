@@ -1,5 +1,6 @@
-import { Position, Render, Path, PathLine } from '../components.js';
-import { getRenderableEntities, getPathEntities } from '../world.js';
+import { Position, Render, Path, PathLine, Hover } from '../components.js';
+import { getRenderableEntities, getPathEntities, world } from '../world.js';
+import { hasComponent } from 'bitecs';
 import { GAME_CONFIG } from '../../config.js';
 import { createLogger } from '../../logger/index.js';
 
@@ -130,11 +131,18 @@ export function renderSystem(ctx: CanvasRenderingContext2D, scaleX: number, scal
     const radius = Render.radius[entity] * Math.min(scaleX, scaleY);
     const color = `#${Render.color[entity].toString(16).padStart(6, '0')}`;
     // logger.info(`Drawing entity ${entity} at position ${x}, ${y} with radius ${radius} and color ${color} scaleX: ${scaleX} scaleY: ${scaleY} `);
-    // // Draw circle
+    // Draw circle
     ctx.beginPath();
     ctx.arc(x, y, radius, 0, Math.PI * 2);
     ctx.fillStyle = color;
     ctx.fill();
+    
+    // Draw border if hovered
+    if (hasComponent(world, entity, Hover)) {
+      ctx.strokeStyle = GAME_CONFIG.CONTROL_POINT.HOVER_BORDER_COLOR;
+      ctx.lineWidth = GAME_CONFIG.CONTROL_POINT.HOVER_BORDER_WIDTH;
+      ctx.stroke();
+    }
   }
   
   // Draw FPS counter

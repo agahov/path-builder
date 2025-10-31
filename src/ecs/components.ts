@@ -40,4 +40,22 @@ export const ControlPoint = {
   isControlPoint: [] as number[],   // Flag marker (1 = true, 0 = false)
 };
 
+// Draggable component - marker for entities that can be dragged (tag only)
+export const Draggable = {};
+
+// Dragging component - marker for entities currently being dragged (tag only)
+export const Dragging = {};
+
+// Hover component - marker for entities currently hovered (tag only)
+export const Hover = {};
+
+// Mouse component - global mouse state (single entity)
+export const Mouse = {
+  screenX: [] as number[],
+  screenY: [] as number[],
+  worldX: [] as number[],
+  worldY: [] as number[],
+  isDown: [] as number[],     // 1 = mouse down, 0 = mouse up
+  selected: [] as number[], // Entity selected on mouseDown, cleared when new entity found or mouseUp
+};
 

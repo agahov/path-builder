@@ -1,5 +1,6 @@
-import { createWorld, addEntity, addComponent, query } from 'bitecs';
-import { Position, Movement, Render, Path, PathLine, PathParent, ControlPoint } from './components.js';
+import { createWorld, addEntity, addComponent, removeComponent, query } from 'bitecs';
+export { removeComponent };
+import { Position, Movement, Render, Path, PathLine, PathParent, ControlPoint, Draggable, Hover, Dragging } from './components.js';
 
 // Create the ECS world
 export const world = createWorld();
@@ -56,4 +57,16 @@ export function getControlPointEntities() {
 
 export function getPathLineEntities() {
   return query(world, [PathLine]);
+}
+
+export function getDraggableEntities() {
+  return query(world, [Draggable, Position]);
+}
+
+export function getHoveredEntities() {
+  return query(world, [Hover]);
+}
+
+export function getDraggingEntities() {
+  return query(world, [Dragging, Position]);
 }

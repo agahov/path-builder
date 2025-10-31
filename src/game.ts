@@ -1,5 +1,8 @@
 import { movementSystem } from './ecs/systems/movement.js';
 import { renderSystem } from './ecs/systems/render.js';
+import { mouseInteractionSystem } from './ecs/systems/mouseInteraction.js';
+import { dragSystem } from './ecs/systems/dragSystem.js';
+import { createMouseCaptureSystem } from './ecs/systems/mouseCapture.js';
 import { createPathWithControlPoints } from './ecs/entities.js';
 import { GAME_CONFIG } from './config.js';
 import { createLogger } from './logger/index.js';
@@ -28,6 +31,9 @@ export function createGame(canvas: HTMLCanvasElement) {
   const scaleX = canvas.width / GAME_CONFIG.CANVAS_WIDTH;
   const scaleY = canvas.height / GAME_CONFIG.CANVAS_HEIGHT;
   
+  // Create mouse capture system
+  const mouseCaptureSystem = createMouseCaptureSystem(canvas, scaleX, scaleY);
+  
   // Create initial entities
   function createInitialEntities() {
     // Create a path with 3 control points
@@ -55,6 +61,11 @@ export function createGame(canvas: HTMLCanvasElement) {
     // Update game systems
     movementSystem(deltaTime);
     
+    // Update mouse interaction systems
+    const mouse = mouseCaptureSystem.getInteractiveEntity();
+    mouseInteractionSystem(mouse);
+    dragSystem(mouse);
+    
     // Render
     if (ctx) {
       renderSystem(ctx, scaleX, scaleY, fps);
@@ -73,6 +84,9 @@ export function createGame(canvas: HTMLCanvasElement) {
     lastFpsUpdate = lastTime;
     frameCount = 0;
     
+    // Start mouse capture system
+    mouseCaptureSystem.start();
+    
     // Create initial entities if none exist
     createInitialEntities();
     
@@ -84,6 +98,10 @@ export function createGame(canvas: HTMLCanvasElement) {
     
     logger.info('Stopping game');
     isRunning = false;
+    
+    // Stop mouse capture system
+    mouseCaptureSystem.stop();
+    
     if (animationId) {
       cancelAnimationFrame(animationId);
       animationId = 0;

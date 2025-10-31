@@ -25,6 +25,13 @@ export const GAME_CONFIG = {
     CONTROL_POINT_RADIUS: 8,
     CONTROL_POINT_COLOR: 0xff0000,   // Red
   },
+  
+  // Control point interaction configuration
+  CONTROL_POINT: {
+    CLICK_RADIUS: 15, // pixels for click detection
+    HOVER_BORDER_WIDTH: 2,
+    HOVER_BORDER_COLOR: '#ffffff',
+  },
 } as const;
 
 export const LOGGER_CONFIG = {

@@ -1,7 +1,7 @@
 import { movementSystem } from './ecs/systems/movement.js';
 import { renderSystem } from './ecs/systems/render.js';
 import { createMouseInteractionSystem } from './ecs/systems/mouseInteraction.js';
-import { dragSystem } from './ecs/systems/dragSystem.js';
+import { createDragSystem } from './ecs/systems/dragSystem.js';
 import { createMouseCaptureSystem } from './ecs/systems/mouseCapture.js';
 import { createPathWithControlPoints } from './ecs/entities.js';
 import { GAME_CONFIG } from './config.js';
@@ -37,6 +37,9 @@ export function createGame(canvas: HTMLCanvasElement) {
   // Create mouse interaction system
   const mouseInteractionSystem = createMouseInteractionSystem();
   
+  // Create drag system
+  const dragSystem = createDragSystem();
+  
   // Register mouse event handlers
   mouseCaptureSystem.on('mousemove', mouseInteractionSystem.onMouseMove);
   mouseCaptureSystem.on('mousedown', mouseInteractionSystem.onMouseDown);
@@ -69,9 +72,12 @@ export function createGame(canvas: HTMLCanvasElement) {
     // Update game systems
     movementSystem(deltaTime);
     
-    // Update drag system (runs every frame during dragging)
+    // Update drag system (runs every frame, needs MouseDown/MouseUp before cleanup)
     const mouse = mouseCaptureSystem.getMouseState();
-    dragSystem(mouse);
+    dragSystem.update(mouse);
+    
+    // Update mouse interaction system (cleans up event components after drag system)
+    mouseInteractionSystem.update();
     
     // Render
     if (ctx) {

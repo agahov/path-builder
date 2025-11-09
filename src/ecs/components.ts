@@ -49,6 +49,27 @@ export const Dragging = {};
 // Hover component - marker for entities currently hovered (tag only)
 export const Hover = {};
 
+// MouseInteractable component - marker for entities that can receive mouse events (tag only)
+export const MouseInteractable = {};
+
+// MouseEnter component - tag component added when mouse enters entity bounds (one-frame event)
+export const MouseEnter = {};
+
+// MouseLeave component - tag component added when mouse leaves entity bounds (one-frame event)
+export const MouseLeave = {};
+
+// MouseDown component - tag component added when mouse button pressed on entity (one-frame event)
+export const MouseDown = {};
+
+// MouseUp component - tag component added when mouse button released on entity (one-frame event)
+export const MouseUp = {};
+
+// DragBegin component - tag component added when dragging starts (one-frame event)
+export const DragBegin = {};
+
+// DragEnd component - tag component added when dragging ends (removes itself)
+export const DragEnd = {};
+
 // Mouse component - global mouse state (single entity)
 export const Mouse = {
   screenX: [] as number[],

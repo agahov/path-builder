@@ -1,5 +1,5 @@
-import { Hover, Dragging, Position, Render } from '../components.js';
-import { world, getDraggableEntities, getHoveredEntities, getDraggingEntities } from '../world.js';
+import { MouseEnter, MouseLeave, MouseDown, MouseUp, Position, Render } from '../components.js';
+import { world, getMouseInteractableEntities, getMouseEnteredEntities, getMouseLeaveEntities, getMouseDownEntities, getMouseUpEntities } from '../world.js';
 import { addComponent, removeComponent } from 'bitecs';
 import { GAME_CONFIG } from '../../config.js';
 import { createLogger } from '../../logger/index.js';
@@ -8,18 +8,18 @@ import { MouseEventHandler } from '../types.js';
 const logger = createLogger('mouseInteraction');
 
 export function createMouseInteractionSystem() {
-  let phase: 'hover' | 'dragging' = 'hover';
+  let lastHoveredEntity: number | null = null;
   
-  // Find draggable entity at position
+  // Find mouse-interactable entity at position
   function findEntityAtPosition(worldX: number, worldY: number): number | null {
-    const draggableEntities = getDraggableEntities();
+    const interactableEntities = getMouseInteractableEntities();
     const clickRadius = GAME_CONFIG.CONTROL_POINT.CLICK_RADIUS;
     
     let closestEntity: number | null = null;
     let closestDistance = clickRadius + 1;
     
-    for (let i = 0; i < draggableEntities.length; i++) {
-      const entity = draggableEntities[i];
+    for (let i = 0; i < interactableEntities.length; i++) {
+      const entity = interactableEntities[i];
       const dx = Position.x[entity] - worldX;
       const dy = Position.y[entity] - worldY;
       const distance = Math.sqrt(dx * dx + dy * dy);
@@ -37,120 +37,111 @@ export function createMouseInteractionSystem() {
   }
   
   /**
-   * System 1: For Draggable entities - add Hover if near mouse, remove if far
+   * Update MouseEnter/MouseLeave components based on mouse position
    */
-  function updateDraggableHover(worldX: number, worldY: number) {
-    const draggableEntities = getDraggableEntities();
-    const clickRadius = GAME_CONFIG.CONTROL_POINT.CLICK_RADIUS;
+  function updateMouseEnterLeave(worldX: number, worldY: number) {
+    const currentEntity = findEntityAtPosition(worldX, worldY);
     
-    // Find closest draggable entity within radius
-    let closestEntity: number | null = null;
-    let closestDistance = clickRadius + 1;
-    
-    for (let i = 0; i < draggableEntities.length; i++) {
-      const entity = draggableEntities[i];
-      const dx = Position.x[entity] - worldX;
-      const dy = Position.y[entity] - worldY;
-      const distance = Math.sqrt(dx * dx + dy * dy);
-      
-      const entityRadius = Render.radius[entity];
-      const threshold = Math.max(clickRadius, entityRadius);
-      
-      if (distance < threshold && distance < closestDistance) {
-        closestDistance = distance;
-        closestEntity = entity;
+    // If mouse is over a different entity, handle enter/leave
+    if (currentEntity !== lastHoveredEntity) {
+      // Add MouseLeave to previous entity if it exists
+      if (lastHoveredEntity !== null) {
+        try {
+          addComponent(world, lastHoveredEntity, MouseLeave);
+          logger.debug(`Added MouseLeave to entity ${lastHoveredEntity}`);
+        } catch (e) {
+          // Already has MouseLeave, ignore
+        }
       }
-    }
-    
-    // Add Hover to closest entity if found
-    if (closestEntity !== null) {
-      try {
-        addComponent(world, closestEntity, Hover);
-        logger.debug(`Added Hover to entity ${closestEntity}`);
-      } catch (e) {
-        // Already has Hover component, ignore
+      
+      // Add MouseEnter to current entity if it exists
+      if (currentEntity !== null) {
+        try {
+          addComponent(world, currentEntity, MouseEnter);
+          logger.debug(`Added MouseEnter to entity ${currentEntity}`);
+        } catch (e) {
+          // Already has MouseEnter, ignore
+        }
       }
+      
+      lastHoveredEntity = currentEntity;
     }
   }
   
   /**
-   * System 2: For Hover components - if they are far from mouse, remove Hover
+   * Clean up one-frame event components (MouseEnter, MouseLeave, MouseDown, MouseUp)
    */
-  function cleanupHover(worldX: number, worldY: number) {
-    const hoveredEntities = getHoveredEntities();
-    const clickRadius = GAME_CONFIG.CONTROL_POINT.CLICK_RADIUS;
-    
-    for (let i = 0; i < hoveredEntities.length; i++) {
-      const entity = hoveredEntities[i];
-      const dx = Position.x[entity] - worldX;
-      const dy = Position.y[entity] - worldY;
-      const distance = Math.sqrt(dx * dx + dy * dy);
-      
-      const entityRadius = Render.radius[entity];
-      const threshold = Math.max(clickRadius, entityRadius);
-      
-      // Remove Hover if entity is too far from mouse
-      if (distance >= threshold) {
-        removeComponent(world, entity, Hover);
-        logger.debug(`Removed Hover from entity ${entity} (distance: ${distance.toFixed(2)})`);
-      }
+  function cleanupEventComponents() {
+    // Remove MouseEnter components
+    const enteredEntities = getMouseEnteredEntities();
+    for (let i = 0; i < enteredEntities.length; i++) {
+      const entity = enteredEntities[i];
+      removeComponent(world, entity, MouseEnter);
     }
-  }
-  
-  /**
-   * Hover system - runs both cleanup and update
-   */
-  function runHoverSystem(worldX: number, worldY: number) {
-    if (phase !== 'hover') return;
     
-    cleanupHover(worldX, worldY);
-    updateDraggableHover(worldX, worldY);
+    // Remove MouseLeave components
+    const leaveEntities = getMouseLeaveEntities();
+    for (let i = 0; i < leaveEntities.length; i++) {
+      const entity = leaveEntities[i];
+      removeComponent(world, entity, MouseLeave);
+    }
+    
+    // Remove MouseDown components
+    const mouseDownEntities = getMouseDownEntities();
+    for (let i = 0; i < mouseDownEntities.length; i++) {
+      const entity = mouseDownEntities[i];
+      removeComponent(world, entity, MouseDown);
+    }
+    
+    // Remove MouseUp components
+    const mouseUpEntities = getMouseUpEntities();
+    for (let i = 0; i < mouseUpEntities.length; i++) {
+      const entity = mouseUpEntities[i];
+      removeComponent(world, entity, MouseUp);
+    }
   }
   
   const onMouseDown: MouseEventHandler = (worldX: number, worldY: number) => {
-    if (phase !== 'hover') return;
-    
     const entity = findEntityAtPosition(worldX, worldY);
     
     if (entity !== null) {
       try {
-        addComponent(world, entity, Dragging);
-        phase = 'dragging';
-        logger.info(`Started dragging entity ${entity}`);
+        addComponent(world, entity, MouseDown);
+        logger.info(`Added MouseDown to entity ${entity}`);
       } catch (e) {
-        // Already has Dragging component, ignore
+        // Already has MouseDown, ignore
       }
     }
   };
   
   const onMouseUp: MouseEventHandler = (worldX: number, worldY: number) => {
-    if (phase !== 'dragging') return;
+    const entity = findEntityAtPosition(worldX, worldY);
     
-    const draggingEntities = getDraggingEntities();
-    for (let i = 0; i < draggingEntities.length; i++) {
-      const entity = draggingEntities[i];
-      removeComponent(world, entity, Dragging);
-      logger.info(`Stopped dragging entity ${entity}`);
+    if (entity !== null) {
+      try {
+        addComponent(world, entity, MouseUp);
+        logger.info(`Added MouseUp to entity ${entity}`);
+      } catch (e) {
+        // Already has MouseUp, ignore
+      }
     }
-    
-    phase = 'hover';
-    // Immediately run hover system to restore hover state
-    runHoverSystem(worldX, worldY);
   };
   
   const onMouseMove: MouseEventHandler = (worldX: number, worldY: number) => {
-    runHoverSystem(worldX, worldY);
+    updateMouseEnterLeave(worldX, worldY);
   };
   
-  // Initialize in hover phase
-  phase = 'hover';
-  
-  const getPhase = () => phase;
+  /**
+   * Update function to be called each frame to clean up event components
+   */
+  const update = () => {
+    cleanupEventComponents();
+  };
   
   return {
     onMouseDown,
     onMouseUp,
     onMouseMove,
-    getPhase,
+    update,
   };
 }

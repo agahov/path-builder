@@ -1,4 +1,4 @@
-import { Position, Movement, Render, Path, PathLine, PathParent, ControlPoint, Draggable } from './components.js';
+import { Position, Movement, Render, Path, PathLine, PathParent, ControlPoint, Draggable, MouseInteractable } from './components.js';
 import { createEntity, world, addComponent } from './world.js';
 import { addEntity } from 'bitecs';
 import { GAME_CONFIG } from '../config.js';
@@ -70,6 +70,7 @@ export function createControlPointEntity(
   addComponent(world, entity, Render);
   addComponent(world, entity, ControlPoint);
   addComponent(world, entity, PathParent);
+  addComponent(world, entity, MouseInteractable);
   addComponent(world, entity, Draggable);
   
   // Set position (scaled to game coordinates)

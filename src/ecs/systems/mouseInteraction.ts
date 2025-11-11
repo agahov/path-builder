@@ -1,6 +1,6 @@
-import { MouseEnter, MouseLeave, MouseDown, MouseUp, MouseIn, Position, Render } from '../components.js';
+import { MouseEnter, MouseLeave, MouseDown, MouseUp, MouseIn, Position, Render, MouseInteractable } from '../components.js';
 import { world, getMouseInteractableEntities, getMouseInEntities, getMouseEnteredEntities, getMouseLeaveEntities, getMouseDownEntities, getMouseUpEntities } from '../world.js';
-import { addComponent, removeComponent, hasComponent } from 'bitecs';
+import { addComponent, removeComponent, hasComponent, query, Not } from 'bitecs';
 import { GAME_CONFIG } from '../../config.js';
 import { createLogger } from '../../logger/index.js';
 import { MouseEventHandler } from '../types.js';
@@ -34,7 +34,8 @@ export function createMouseInteractionSystem() {
     currentMouseY = worldY;
     
     // Query Interactive entities (not MouseIn)
-    const interactableEntities = getMouseInteractableEntities();
+    //const interactableEntities = getMouseInteractableEntities();
+    const interactableEntities =  query(world, [MouseInteractable, Position, Render, Not(MouseIn)]);
     
     for (let i = 0; i < interactableEntities.length; i++) {
       const entity = interactableEntities[i];

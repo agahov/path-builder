@@ -56,48 +56,7 @@ export function createMouseInteractionSystem() {
     }
   }
   
-  /**
-   * Clean up one-frame event components (MouseEnter, MouseLeave, MouseDown, MouseUp)
-   */
-  function cleanupEventComponents() {
-    // Remove MouseLeave components first
-    const leaveEntities = getMouseLeaveEntities();
-    for (let i = 0; i < leaveEntities.length; i++) {
-      const entity = leaveEntities[i];
-      removeComponent(world, entity, MouseLeave);
-    }
 
-    // Check all entities with MouseEnter - if not under mouse, remove and add MouseLeave
-    const enteredEntities = getMouseEnteredEntities();
-    for (let i = 0; i < enteredEntities.length; i++) {
-      const entity = enteredEntities[i];
-      
-      // Check if entity is still under mouse
-      if (!isEntityUnderMouse(entity, currentMouseX, currentMouseY)) {
-        removeComponent(world, entity, MouseEnter);
-        try {
-          addComponent(world, entity, MouseLeave);
-          logger.debug(`Removed MouseEnter and added MouseLeave to entity ${entity}`);
-        } catch (e) {
-          // Already has MouseLeave, ignore
-        }
-      }
-    }
-    
-    // Remove MouseDown components
-    const mouseDownEntities = getMouseDownEntities();
-    for (let i = 0; i < mouseDownEntities.length; i++) {
-      const entity = mouseDownEntities[i];
-      removeComponent(world, entity, MouseDown);
-    }
-    
-    // Remove MouseUp components
-    const mouseUpEntities = getMouseUpEntities();
-    for (let i = 0; i < mouseUpEntities.length; i++) {
-      const entity = mouseUpEntities[i];
-      removeComponent(world, entity, MouseUp);
-    }
-  }
   
   // Find mouse-interactable entity at position (used for MouseDown/MouseUp)
   function findEntityAtPosition(worldX: number, worldY: number): number | null {
@@ -161,6 +120,50 @@ export function createMouseInteractionSystem() {
   const update = () => {
     cleanupEventComponents();
   };
+
+
+    /**
+   * Clean up one-frame event components (MouseEnter, MouseLeave, MouseDown, MouseUp)
+   */
+    function cleanupEventComponents() {
+      // Remove MouseLeave components first
+      const leaveEntities = getMouseLeaveEntities();
+      for (let i = 0; i < leaveEntities.length; i++) {
+        const entity = leaveEntities[i];
+        removeComponent(world, entity, MouseLeave);
+      }
+  
+      // Check all entities with MouseEnter - if not under mouse, remove and add MouseLeave
+      const enteredEntities = getMouseEnteredEntities();
+      for (let i = 0; i < enteredEntities.length; i++) {
+        const entity = enteredEntities[i];
+        
+        // Check if entity is still under mouse
+        if (!isEntityUnderMouse(entity, currentMouseX, currentMouseY)) {
+          removeComponent(world, entity, MouseEnter);
+          try {
+            addComponent(world, entity, MouseLeave);
+            logger.debug(`Removed MouseEnter and added MouseLeave to entity ${entity}`);
+          } catch (e) {
+            // Already has MouseLeave, ignore
+          }
+        }
+      }
+      
+      // Remove MouseDown components
+      const mouseDownEntities = getMouseDownEntities();
+      for (let i = 0; i < mouseDownEntities.length; i++) {
+        const entity = mouseDownEntities[i];
+        removeComponent(world, entity, MouseDown);
+      }
+      
+      // Remove MouseUp components
+      const mouseUpEntities = getMouseUpEntities();
+      for (let i = 0; i < mouseUpEntities.length; i++) {
+        const entity = mouseUpEntities[i];
+        removeComponent(world, entity, MouseUp);
+      }
+    } 
   
   return {
     onMouseDown,

@@ -1,4 +1,4 @@
-import { Position, Render, Path, PathLine, Hover, MouseEnter } from '../components.js';
+import { Position, Render, Path, PathLine, MouseIn } from '../components.js';
 import { getRenderableEntities, getPathEntities, world } from '../world.js';
 import { hasComponent } from 'bitecs';
 import { GAME_CONFIG } from '../../config.js';
@@ -138,7 +138,7 @@ export function renderSystem(ctx: CanvasRenderingContext2D, scaleX: number, scal
     ctx.fill();
     
     // Draw border if hovered
-    if (hasComponent(world, entity, MouseEnter)) {
+    if (hasComponent(world, entity, MouseIn)) {
       ctx.strokeStyle = GAME_CONFIG.CONTROL_POINT.HOVER_BORDER_COLOR;
       ctx.lineWidth = GAME_CONFIG.CONTROL_POINT.HOVER_BORDER_WIDTH;
       ctx.stroke();

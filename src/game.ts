@@ -76,7 +76,7 @@ export function createGame(canvas: HTMLCanvasElement) {
     const mouse = mouseCaptureSystem.getMouseState();
     dragSystem.update(mouse);
     
-    // Update mouse interaction system (cleans up event components after drag system)
+    // Update mouse interaction system (validates MouseEnter and cleans up event components after drag system)
     mouseInteractionSystem.update();
     
     // Render

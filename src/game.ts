@@ -1,5 +1,5 @@
 import { movementSystem } from './ecs/systems/movement.js';
-import { renderSystem } from './ecs/systems/render.js';
+import { createRenderSystem } from './ecs/systems/render.js';
 import { createMouseInteractionSystem } from './ecs/systems/mouseInteraction.js';
 import { createDragSystem } from './ecs/systems/dragSystem.js';
 import { createMouseCaptureSystem } from './ecs/systems/mouseCapture.js';
@@ -39,6 +39,9 @@ export function createGame(canvas: HTMLCanvasElement) {
   
   // Create drag system
   const dragSystem = createDragSystem();
+  
+  // Create render system
+  const renderSystem = createRenderSystem(ctx, scaleX, scaleY);
   
   // Register mouse event handlers
   mouseCaptureSystem.on('mousemove', mouseInteractionSystem.onMouseMove);
@@ -80,9 +83,7 @@ export function createGame(canvas: HTMLCanvasElement) {
     mouseInteractionSystem.update();
     
     // Render
-    if (ctx) {
-      renderSystem(ctx, scaleX, scaleY, fps);
-    }
+    renderSystem.render(fps);
     
     animationId = requestAnimationFrame(gameLoop);
   }

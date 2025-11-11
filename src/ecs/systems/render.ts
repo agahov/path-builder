@@ -111,42 +111,74 @@ function pathRenderSystem(ctx: CanvasRenderingContext2D, scaleX: number, scaleY:
   }
 }
 
-export function renderSystem(ctx: CanvasRenderingContext2D, scaleX: number, scaleY: number, fps: number) {
+export function createRenderSystem(ctx: CanvasRenderingContext2D, scaleX: number, scaleY: number) {
   // Clear canvas
-  ctx.fillStyle = GAME_CONFIG.BACKGROUND_COLOR;
-  ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+  function clear() {
+    ctx.fillStyle = GAME_CONFIG.BACKGROUND_COLOR;
+    ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+  }
   
-  // Render paths first (background layer)
-  pathRenderSystem(ctx, scaleX, scaleY);
+  // Render paths
+  function renderPath() {
+    pathRenderSystem(ctx, scaleX, scaleY);
+  }
   
-  // Get all renderable entities (including control points)
-  const entities = getRenderableEntities();
-  logger.info(`Render system: ${entities.length} entities found`);  
-  // Draw all entities
-  for (let i = 0; i < entities.length; i++) {
-    const entity = entities[i];
+  // Render base control points (without MouseIn borders)
+  function renderControlPoints() {
+    const entities = getRenderableEntities();
+    logger.info(`Render system: ${entities.length} entities found`);
     
-    const x = Position.x[entity] * scaleX;
-    const y = Position.y[entity] * scaleY;
-    const radius = Render.radius[entity] * Math.min(scaleX, scaleY);
-    const color = `#${Render.color[entity].toString(16).padStart(6, '0')}`;
-    // logger.info(`Drawing entity ${entity} at position ${x}, ${y} with radius ${radius} and color ${color} scaleX: ${scaleX} scaleY: ${scaleY} `);
-    // Draw circle
-    ctx.beginPath();
-    ctx.arc(x, y, radius, 0, Math.PI * 2);
-    ctx.fillStyle = color;
-    ctx.fill();
-    
-    // Draw border if hovered
-    if (hasComponent(world, entity, MouseIn)) {
-      ctx.strokeStyle = GAME_CONFIG.CONTROL_POINT.HOVER_BORDER_COLOR;
-      ctx.lineWidth = GAME_CONFIG.CONTROL_POINT.HOVER_BORDER_WIDTH;
-      ctx.stroke();
+    for (let i = 0; i < entities.length; i++) {
+      const entity = entities[i];
+      
+      const x = Position.x[entity] * scaleX;
+      const y = Position.y[entity] * scaleY;
+      const radius = Render.radius[entity] * Math.min(scaleX, scaleY);
+      const color = `#${Render.color[entity].toString(16).padStart(6, '0')}`;
+      
+      // Draw circle
+      ctx.beginPath();
+      ctx.arc(x, y, radius, 0, Math.PI * 2);
+      ctx.fillStyle = color;
+      ctx.fill();
     }
   }
   
-  // Draw FPS counter
-  ctx.fillStyle = '#ffffff';
-  ctx.font = '16px Arial';
-  ctx.fillText(`FPS: ${fps.toFixed(1)}`, 10, 25);
+  // Render MouseIn borders on control points
+  function renderControlPointsWithMouseIn() {
+    const entities = getRenderableEntities();
+    
+    for (let i = 0; i < entities.length; i++) {
+      const entity = entities[i];
+      
+      if (hasComponent(world, entity, MouseIn)) {
+        const x = Position.x[entity] * scaleX;
+        const y = Position.y[entity] * scaleY;
+        const radius = Render.radius[entity] * Math.min(scaleX, scaleY);
+        
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, Math.PI * 2);
+        ctx.strokeStyle = GAME_CONFIG.CONTROL_POINT.HOVER_BORDER_COLOR;
+        ctx.lineWidth = GAME_CONFIG.CONTROL_POINT.HOVER_BORDER_WIDTH;
+        ctx.stroke();
+      }
+    }
+  }
+  
+  // Main render method
+  function render(fps: number) {
+    clear();
+    renderPath();
+    renderControlPoints();
+    renderControlPointsWithMouseIn();
+    
+    // Draw FPS counter
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '16px Arial';
+    ctx.fillText(`FPS: ${fps.toFixed(1)}`, 10, 25);
+  }
+  
+  return {
+    render,
+  };
 }

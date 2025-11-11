@@ -1,6 +1,6 @@
 import { Position, Render, Path, PathLine, MouseIn } from '../components.js';
 import { getRenderableEntities, getPathEntities, world } from '../world.js';
-import { hasComponent } from 'bitecs';
+import { hasComponent, query } from 'bitecs';
 import { GAME_CONFIG } from '../../config.js';
 import { createLogger } from '../../logger/index.js';
 
@@ -125,7 +125,8 @@ export function createRenderSystem(ctx: CanvasRenderingContext2D, scaleX: number
   
   // Render base control points (without MouseIn borders)
   function renderControlPoints() {
-    const entities = getRenderableEntities();
+    //const entities = getRenderableEntities();
+    const entities =  query(world, [Position, Render]);
     logger.info(`Render system: ${entities.length} entities found`);
     
     for (let i = 0; i < entities.length; i++) {
@@ -146,12 +147,13 @@ export function createRenderSystem(ctx: CanvasRenderingContext2D, scaleX: number
   
   // Render MouseIn borders on control points
   function renderControlPointsWithMouseIn() {
-    const entities = getRenderableEntities();
+    //const entities = getRenderableEntities();
+    const entities =  query(world, [Position, Render, MouseIn]);
     
     for (let i = 0; i < entities.length; i++) {
       const entity = entities[i];
       
-      if (hasComponent(world, entity, MouseIn)) {
+      //if (hasComponent(world, entity, MouseIn)) {
         const x = Position.x[entity] * scaleX;
         const y = Position.y[entity] * scaleY;
         const radius = Render.radius[entity] * Math.min(scaleX, scaleY);
@@ -161,7 +163,7 @@ export function createRenderSystem(ctx: CanvasRenderingContext2D, scaleX: number
         ctx.strokeStyle = GAME_CONFIG.CONTROL_POINT.HOVER_BORDER_COLOR;
         ctx.lineWidth = GAME_CONFIG.CONTROL_POINT.HOVER_BORDER_WIDTH;
         ctx.stroke();
-      }
+      //}
     }
   }
   

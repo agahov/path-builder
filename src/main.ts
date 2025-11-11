@@ -15,8 +15,8 @@ game.start();
 // Handle page visibility changes to pause/resume game
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) {
-    game.stop();
+    game.pause();
   } else {
-    game.start();
+    game.resume();
   }
 });

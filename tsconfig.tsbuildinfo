@@ -1,1 +1,1 @@
-{"root":["./src/main.ts","./src/vite-env.d.ts"],"version":"5.9.3"}
+{"root":["./src/config.ts","./src/game.ts","./src/main.ts","./src/vite-env.d.ts","./src/ecs/components.ts","./src/ecs/entities.ts","./src/ecs/types.ts","./src/ecs/world.ts","./src/ecs/systems/dragsystem.ts","./src/ecs/systems/mousecapture.ts","./src/ecs/systems/mouseinteraction.ts","./src/ecs/systems/movement.ts","./src/ecs/systems/render.ts","./src/logger/logger.ts","./src/logger/loggerutils.ts","./src/logger/demo.ts","./src/logger/index.ts","./src/logger/types.ts"],"errors":true,"version":"5.9.3"}

@@ -1,4 +1,4 @@
-import { createWorld, addEntity, addComponent, removeComponent, query } from 'bitecs';
+import { createWorld, addEntity, addComponent, removeComponent, query, removeEntity } from 'bitecs';
 export { removeComponent };
 import { Position, Movement, Render, Path, PathLine, PathParent, ControlPoint, Draggable, Hover, Dragging, MouseInteractable, MouseIn, MouseEnter, MouseLeave, MouseDown, MouseUp, DragBegin, DragEnd } from './components.js';
 
@@ -109,4 +109,49 @@ export function getDraggableWithMouseDownEntities() {
 
 export function getDraggingWithMouseUpEntities() {
   return query(world, [Dragging, MouseUp]);
+}
+
+/**
+ * Clear all entities from the world by removing all components from each entity
+ */
+export function clearAllEntities() {
+  // Collect all unique entity IDs by querying with different component combinations
+  const entitySet = new Set<number>();
+  
+  // Query entities with Position (most entities have this)
+  const positionEntities = query(world, [Position]);
+  for (let i = 0; i < positionEntities.length; i++) {
+    entitySet.add(positionEntities[i]);
+  }
+  
+  // Query Path entities (they might not have Position)
+  const pathEntities = query(world, [Path]);
+  for (let i = 0; i < pathEntities.length; i++) {
+    entitySet.add(pathEntities[i]);
+  }
+  
+  // Query PathLine entities (they might not have Position)
+  const pathLineEntities = query(world, [PathLine]);
+  for (let i = 0; i < pathLineEntities.length; i++) {
+    entitySet.add(pathLineEntities[i]);
+  }
+  
+  // Remove all components from each entity
+  const allComponents = [
+    Position, Movement, Render, Path, PathLine, PathParent, ControlPoint,
+    Draggable, Hover, Dragging, MouseInteractable, MouseIn, MouseEnter,
+    MouseLeave, MouseDown, MouseUp, DragBegin, DragEnd
+  ];
+  
+  for (const entity of entitySet) {
+    for (const component of allComponents) {
+      try {
+        removeComponent(world, entity, component);
+      } catch (e) {
+        // Component doesn't exist on this entity, ignore
+      }
+    }
+    // Remove the entity itself
+    removeEntity(world, entity);
+  }
 }

@@ -4,6 +4,7 @@ import { createMouseInteractionSystem } from './ecs/systems/mouseInteraction.js'
 import { createDragSystem } from './ecs/systems/dragSystem.js';
 import { createMouseCaptureSystem } from './ecs/systems/mouseCapture.js';
 import { createPathWithControlPoints } from './ecs/entities.js';
+import { clearAllEntities } from './ecs/world.js';
 import { GAME_CONFIG } from './config.js';
 import { createLogger } from './logger/index.js';
 
@@ -88,11 +89,11 @@ export function createGame(canvas: HTMLCanvasElement) {
     animationId = requestAnimationFrame(gameLoop);
   }
   
-  // Public methods
-  const start = () => {
+  // Internal method to start the game loop (without entity creation)
+  function startGameLoop() {
     if (isRunning) return;
     
-    logger.info('Starting game');
+    logger.info('Starting game loop');
     isRunning = true;
     lastTime = performance.now();
     lastFpsUpdate = lastTime;
@@ -101,16 +102,14 @@ export function createGame(canvas: HTMLCanvasElement) {
     // Start mouse capture system
     mouseCaptureSystem.start();
     
-    // Create initial entities if none exist
-    createInitialEntities();
-    
     gameLoop(lastTime);
-  };
+  }
   
-  const stop = () => {
+  // Internal method to stop the game loop (without clearing entities)
+  function stopGameLoop() {
     if (!isRunning) return;
     
-    logger.info('Stopping game');
+    logger.info('Stopping game loop');
     isRunning = false;
     
     // Stop mouse capture system
@@ -120,6 +119,50 @@ export function createGame(canvas: HTMLCanvasElement) {
       cancelAnimationFrame(animationId);
       animationId = 0;
     }
+  }
+  
+  // Public methods
+  const start = () => {
+    if (isRunning) return;
+    
+    logger.info('Starting game');
+    
+    // Create initial entities
+    createInitialEntities();
+    
+    // Start the game loop
+    startGameLoop();
+  };
+  
+  const stop = () => {
+    if (!isRunning) return;
+    
+    logger.info('Stopping game');
+    
+    // Clear all entities
+    clearAllEntities();
+    logger.info('Cleared all entities');
+    
+    // Stop the game loop
+    stopGameLoop();
+  };
+  
+  const pause = () => {
+    if (!isRunning) return;
+    
+    logger.info('Pausing game');
+    
+    // Stop the game loop without clearing entities
+    stopGameLoop();
+  };
+  
+  const resume = () => {
+    if (isRunning) return;
+    
+    logger.info('Resuming game');
+    
+    // Start the game loop without creating entities
+    startGameLoop();
   };
   
   const getIsRunning = () => isRunning;
@@ -127,6 +170,8 @@ export function createGame(canvas: HTMLCanvasElement) {
   return {
     start,
     stop,
+    pause,
+    resume,
     getIsRunning,
   };
 }

@@ -52,6 +52,9 @@ export const Hover = {};
 // MouseInteractable component - marker for entities that can receive mouse events (tag only)
 export const MouseInteractable = {};
 
+// MouseIn component - persistent state component marking entities currently under the mouse (tag only)
+export const MouseIn = {};
+
 // MouseEnter component - tag component added when mouse enters entity bounds (one-frame event)
 export const MouseEnter = {};
 

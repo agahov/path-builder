@@ -1,6 +1,6 @@
 import { createWorld, addEntity, addComponent, removeComponent, query } from 'bitecs';
 export { removeComponent };
-import { Position, Movement, Render, Path, PathLine, PathParent, ControlPoint, Draggable, Hover, Dragging, MouseInteractable, MouseEnter, MouseLeave, MouseDown, MouseUp, DragBegin, DragEnd } from './components.js';
+import { Position, Movement, Render, Path, PathLine, PathParent, ControlPoint, Draggable, Hover, Dragging, MouseInteractable, MouseIn, MouseEnter, MouseLeave, MouseDown, MouseUp, DragBegin, DragEnd } from './components.js';
 
 // Create the ECS world
 export const world = createWorld();
@@ -73,6 +73,10 @@ export function getDraggingEntities() {
 
 export function getMouseInteractableEntities() {
   return query(world, [MouseInteractable, Position, Render]);
+}
+
+export function getMouseInEntities() {
+  return query(world, [MouseIn]);
 }
 
 export function getMouseEnteredEntities() {

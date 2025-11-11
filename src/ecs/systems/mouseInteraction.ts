@@ -1,5 +1,5 @@
-import { MouseEnter, MouseLeave, MouseDown, MouseUp, Position, Render } from '../components.js';
-import { world, getMouseInteractableEntities, getMouseEnteredEntities, getMouseLeaveEntities, getMouseDownEntities, getMouseUpEntities } from '../world.js';
+import { MouseEnter, MouseLeave, MouseDown, MouseUp, MouseIn, Position, Render } from '../components.js';
+import { world, getMouseInteractableEntities, getMouseInEntities, getMouseEnteredEntities, getMouseLeaveEntities, getMouseDownEntities, getMouseUpEntities } from '../world.js';
 import { addComponent, removeComponent, hasComponent } from 'bitecs';
 import { GAME_CONFIG } from '../../config.js';
 import { createLogger } from '../../logger/index.js';
@@ -26,21 +26,21 @@ export function createMouseInteractionSystem() {
   }
   
   /**
-   * Update MouseEnter/MouseLeave components based on mouse position
+   * Update MouseEnter/MouseIn components based on mouse position
    */
   function updateMouseEnterLeave(worldX: number, worldY: number) {
     // Store current mouse position for cleanup
     currentMouseX = worldX;
     currentMouseY = worldY;
     
-    // Query Interactive entities that don't have MouseEnter
+    // Query Interactive entities (not MouseIn)
     const interactableEntities = getMouseInteractableEntities();
     
     for (let i = 0; i < interactableEntities.length; i++) {
       const entity = interactableEntities[i];
       
-      // Skip if already has MouseEnter
-      if (hasComponent(world, entity, MouseEnter)) {
+      // Skip if already has MouseIn (already entered)
+      if (hasComponent(world, entity, MouseIn)) {
         continue;
       }
       
@@ -48,9 +48,10 @@ export function createMouseInteractionSystem() {
       if (isEntityUnderMouse(entity, worldX, worldY)) {
         try {
           addComponent(world, entity, MouseEnter);
-          logger.debug(`Added MouseEnter to entity ${entity}`);
+          addComponent(world, entity, MouseIn);
+          logger.debug(`Added MouseEnter and MouseIn to entity ${entity}`);
         } catch (e) {
-          // Already has MouseEnter, ignore
+          // Already has component, ignore
         }
       }
     }
@@ -124,26 +125,34 @@ export function createMouseInteractionSystem() {
 
     /**
    * Clean up one-frame event components (MouseEnter, MouseLeave, MouseDown, MouseUp)
+   * and manage MouseIn state
    */
     function cleanupEventComponents() {
-      // Remove MouseLeave components first
+      // Remove MouseEnter components
+      const enteredEntities = getMouseEnteredEntities();
+      for (let i = 0; i < enteredEntities.length; i++) {
+        const entity = enteredEntities[i];
+        removeComponent(world, entity, MouseEnter);
+      }
+      
+      // Remove MouseLeave components
       const leaveEntities = getMouseLeaveEntities();
       for (let i = 0; i < leaveEntities.length; i++) {
         const entity = leaveEntities[i];
         removeComponent(world, entity, MouseLeave);
       }
   
-      // Check all entities with MouseEnter - if not under mouse, remove and add MouseLeave
-      const enteredEntities = getMouseEnteredEntities();
-      for (let i = 0; i < enteredEntities.length; i++) {
-        const entity = enteredEntities[i];
+      // Check all entities with MouseIn - if not under mouse, add MouseLeave and remove MouseIn
+      const mouseInEntities = getMouseInEntities();
+      for (let i = 0; i < mouseInEntities.length; i++) {
+        const entity = mouseInEntities[i];
         
         // Check if entity is still under mouse
         if (!isEntityUnderMouse(entity, currentMouseX, currentMouseY)) {
-          removeComponent(world, entity, MouseEnter);
           try {
             addComponent(world, entity, MouseLeave);
-            logger.debug(`Removed MouseEnter and added MouseLeave to entity ${entity}`);
+            removeComponent(world, entity, MouseIn);
+            logger.debug(`Added MouseLeave and removed MouseIn from entity ${entity}`);
           } catch (e) {
             // Already has MouseLeave, ignore
           }

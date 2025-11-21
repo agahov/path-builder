@@ -1,7 +1,7 @@
 export const GAME_CONFIG = {
   // Base canvas dimensions
-  CANVAS_WIDTH: 1920,
-  CANVAS_HEIGHT: 1080,
+  CANVAS_WIDTH: 1920/2,
+  CANVAS_HEIGHT: 1080/2,
   
   // Colors
   BACKGROUND_COLOR: '#000000',
